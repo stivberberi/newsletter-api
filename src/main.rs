@@ -1,14 +1,10 @@
-use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
-
-#[get("/health_check")]
-async fn health_check() -> impl Responder {
-    HttpResponse::Ok().finish()
-}
+use newsletter_api::run;
+use std::net::TcpListener;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| App::new().service(health_check))
-        .bind(("127.0.0.1", 8080))?
-        .run()
-        .await
+    // set the port to run on
+    let listener = TcpListener::bind("127.0.0.1:8000").expect("Failed to bind to port 8000");
+    println!("Running on 127.0.0.1:8000");
+    run(listener)?.await
 }
