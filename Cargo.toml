@@ -13,8 +13,8 @@ name = "newsletter-api"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-actix-rt = "2.8.0"
-actix-web = "4.3.1"
+actix-rt = "2.9.0"
+actix-web = "4.5.1"
 reqwest = "0.11.18"
 serde = {version = "1", features = ["derive"]}
 tokio = "1.31.0"

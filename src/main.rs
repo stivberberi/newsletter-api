@@ -1,4 +1,4 @@
-use newsletter_api::run;
+use newsletter_api::startup::run;
 use std::net::TcpListener;
 
 #[actix_web::main]

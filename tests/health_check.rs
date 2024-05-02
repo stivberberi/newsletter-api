@@ -4,7 +4,7 @@ fn spawn_app() -> String {
     // binding to port 0 tells the OS to find any available port
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind to random port");
     let port = listener.local_addr().unwrap().port();
-    let server = newsletter_api::run(listener).expect("Failed to bind address");
+    let server = newsletter_api::startup::run(listener).expect("Failed to bind address");
 
     // Create a tokio spawn instance to run the server in the background so as not to hang the test
     // runner
