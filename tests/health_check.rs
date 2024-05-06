@@ -1,3 +1,5 @@
+use newsletter_api::configuration::get_configuration;
+use sqlx::{Connection, PgConnection};
 use std::net::TcpListener;
 
 fn spawn_app() -> String {
@@ -31,10 +33,18 @@ async fn health_check_works() {
 
 #[actix_rt::test]
 async fn subscribe_with_valid_data() {
+    // Arrange
     let app_address = spawn_app();
-    let client = reqwest::Client::new();
-    let body = "name=some%20name&email=some_email%40gmail.com";
+    let configuration = get_configuration().expect("Failed to read configuration");
+    let connection_string = configuration.database.connection_string();
+    let mut connection = PgConnection::connect(&connection_string)
+        .await
+        .expect("Failed to connect to Postgres.");
 
+    let client = reqwest::Client::new();
+
+    // Act
+    let body = "name=some%20name&email=some_email%40gmail.com";
     let response = client
         .post(&format!("{}/subscriptions", &app_address))
         .header("Content-Type", "application/x-www-form-urlencoded")
@@ -43,7 +53,13 @@ async fn subscribe_with_valid_data() {
         .await
         .expect("Failed to execute request.");
 
+    // Assert
     assert_eq!(200, response.status().as_u16());
+
+    let saved = sqlx::query!("SELECT email, name FROM subscriptions")
+        .fetch_one(&mut connection)
+        .await
+        .expect("Failed to fetch saved subscription.");
 }
 
 #[actix_rt::test]
