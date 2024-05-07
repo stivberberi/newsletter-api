@@ -1,6 +1,10 @@
-use newsletter_api::configuration::{get_configuration, DatabaseSettings};
+use newsletter_api::{
+    configuration::{get_configuration, DatabaseSettings},
+    telemetry::{get_subscriber, init_subscriber},
+};
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
+use std::sync::OnceLock;
 use uuid::Uuid;
 
 pub struct TestApp {
@@ -8,7 +12,25 @@ pub struct TestApp {
     pub db_pool: PgPool,
 }
 
+static TRACING: OnceLock<()> = OnceLock::new();
+
 async fn spawn_app() -> TestApp {
+    // ensures we initialise the tracing only once when running tests
+    TRACING.get_or_init(|| {
+        let default_filter_level = "info".to_string();
+        let subscriber_name = "test".to_string();
+
+        // Can't assign `get_subscriber` to a variable based on result of `TEST_LOG` because sink
+        // is part of the return type, meaning they can't be cast to the same type.
+        if std::env::var("TEST_LOG").is_ok() {
+            let subscriber = get_subscriber(subscriber_name, default_filter_level, std::io::stdout);
+            init_subscriber(subscriber);
+        } else {
+            let subscriber = get_subscriber(subscriber_name, default_filter_level, std::io::sink);
+            init_subscriber(subscriber);
+        };
+    });
+
     // binding to port 0 tells the OS to find any available port
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind to random port");
     let port = listener.local_addr().unwrap().port();
